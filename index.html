@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dapur Sedayu - Sistem HPP UMKM</title>
+    
+    <!-- Tailwind CSS (Untuk Styling Cepat) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM (Engine Aplikasi) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (Agar browser mengerti kode React/JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Font Family -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- ICON COMPONENTS (SVG Manual agar tidak perlu install library) ---
+        const Icon = ({ path, size = 20, className = "" }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" stroke="currentColor" 
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
+                className={className}
+            >
+                {path}
+            </svg>
+        );
+
+        const Icons = {
+            Plus: (props) => <Icon path={<><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></>} {...props} />,
+            Trash2: (props) => <Icon path={<><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></>} {...props} />,
+            Save: (props) => <Icon path={<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></>} {...props} />,
+            Calculator: (props) => <Icon path={<><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="14"></line><line x1="8" y1="14" x2="8" y2="14"></line><line x1="12" y1="14" x2="12" y2="14"></line><line x1="8" y1="18" x2="8" y2="18"></line><line x1="12" y1="18" x2="12" y2="18"></line><line x1="16" y1="18" x2="16" y2="18"></line></>} {...props} />,
+            Package: (props) => <Icon path={<><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></>} {...props} />,
+            ChefHat: (props) => <Icon path={<><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"></path><line x1="6" y1="17" x2="18" y2="17"></line></>} {...props} />,
+            BarChart3: (props) => <Icon path={<><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></>} {...props} />,
+            AlertCircle: (props) => <Icon path={<><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></>} {...props} />,
+            Settings: (props) => <Icon path={<><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></>} {...props} />,
+            X: (props) => <Icon path={<><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>} {...props} />,
+            Coffee: (props) => <Icon path={<><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></>} {...props} />,
+            Utensils: (props) => <Icon path={<><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></>} {...props} />
+        };
+
+        // --- KOMPONEN UI ---
+        const Card = ({ children, className = "" }) => (
+            <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 ${className}`}>{children}</div>
+        );
+
+        const Button = ({ children, onClick, variant = "primary", className = "", disabled = false, size = "md" }) => {
+            const baseStyle = "rounded-lg font-medium transition-colors flex items-center gap-2 justify-center";
+            const sizes = {
+                sm: "px-3 py-1.5 text-xs",
+                md: "px-4 py-2 text-sm",
+                lg: "px-6 py-3 text-base"
+            };
+            const variants = {
+                primary: "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300",
+                secondary: "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50",
+                danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-100",
+                ghost: "bg-transparent text-gray-600 hover:bg-gray-100",
+                success: "bg-green-600 text-white hover:bg-green-700"
+            };
+            return (
+                <button onClick={onClick} className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`} disabled={disabled}>
+                    {children}
+                </button>
+            );
+        };
+
+        const Input = ({ label, className="", ...props }) => (
+            <div className={`mb-3 ${className}`}>
+                {label && <label className="block text-xs font-bold text-gray-600 uppercase mb-1">{label}</label>}
+                <input className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" {...props} />
+            </div>
+        );
+
+        // --- DATA AWAL (DEFAULT) ---
+        const INITIAL_MATERIALS = [
+            { id: 1, name: 'Beras', buyUnit: 'karung(25kg)', buyPrice: 350000, conversion: 25000, useUnit: 'gram', stock: 25000 },
+            { id: 2, name: 'Ayam Fillet', buyUnit: 'kg', buyPrice: 45000, conversion: 1000, useUnit: 'gram', stock: 5000 },
+            { id: 3, name: 'Tepung Terigu', buyUnit: 'kg', buyPrice: 12000, conversion: 1000, useUnit: 'gram', stock: 2000 },
+            { id: 4, name: 'Minyak Goreng', buyUnit: 'L', buyPrice: 18000, conversion: 1000, useUnit: 'ml', stock: 5000 },
+            { id: 5, name: 'Bawang Putih', buyUnit: 'kg', buyPrice: 40000, conversion: 1000, useUnit: 'gram', stock: 500 },
+            { id: 6, name: 'Cabe Rawit', buyUnit: 'kg', buyPrice: 60000, conversion: 1000, useUnit: 'gram', stock: 200 },
+            { id: 7, name: 'Tahu Putih', buyUnit: 'box', buyPrice: 30000, conversion: 10, useUnit: 'pcs', stock: 20 },
+            { id: 8, name: 'Kentang', buyUnit: 'kg', buyPrice: 15000, conversion: 1000, useUnit: 'gram', stock: 3000 },
+            { id: 9, name: 'Singkong', buyUnit: 'kg', buyPrice: 8000, conversion: 1000, useUnit: 'gram', stock: 5000 },
+            { id: 10, name: 'Gula Pasir', buyUnit: 'kg', buyPrice: 16000, conversion: 1000, useUnit: 'gram', stock: 2000 },
+            { id: 11, name: 'Kopi Bubuk', buyUnit: 'kg', buyPrice: 120000, conversion: 1000, useUnit: 'gram', stock: 1000 },
+            { id: 12, name: 'Teh Celup', buyUnit: 'box', buyPrice: 15000, conversion: 25, useUnit: 'kantong', stock: 50 },
+            { id: 13, name: 'Susu UHT', buyUnit: 'L', buyPrice: 19000, conversion: 1000, useUnit: 'ml', stock: 2000 },
+            { id: 14, name: 'Bubuk Matcha', buyUnit: 'kg', buyPrice: 150000, conversion: 1000, useUnit: 'gram', stock: 500 },
+            { id: 15, name: 'Jeruk Nipis', buyUnit: 'kg', buyPrice: 20000, conversion: 1000, useUnit: 'gram', stock: 1000 },
+            { id: 16, name: 'Makaroni', buyUnit: 'kg', buyPrice: 25000, conversion: 1000, useUnit: 'gram', stock: 1000 },
+            { id: 17, name: 'Keju Cheddar', buyUnit: 'blok', buyPrice: 22000, conversion: 165, useUnit: 'gram', stock: 330 },
+            { id: 18, name: 'Pentol Bakso', buyUnit: 'pack', buyPrice: 35000, conversion: 50, useUnit: 'btr', stock: 100 },
+        ];
+
+        const INITIAL_RECIPES = [
+            { id: 1, name: 'Nasi Ayam Bawang Putih', type: 'food', yield: 1, ingredients: [{materialId: 1, qty: 100}, {materialId: 2, qty: 120}, {materialId: 5, qty: 10}], overheads: [{name: 'Gas', cost: 200}, {name: 'Box', cost: 1500}], targetMargin: 40 },
+            { id: 2, name: 'Nasi Ayam Serundeng', type: 'food', yield: 1, ingredients: [{materialId: 1, qty: 100}, {materialId: 2, qty: 120}, {materialId: 4, qty: 20}], overheads: [{name: 'Gas', cost: 200}, {name: 'Box', cost: 1500}], targetMargin: 40 },
+            { id: 3, name: 'Nasi Ayam Geprek', type: 'food', yield: 1, ingredients: [{materialId: 1, qty: 100}, {materialId: 2, qty: 120}, {materialId: 6, qty: 15}], overheads: [{name: 'Gas', cost: 200}, {name: 'Box', cost: 1500}], targetMargin: 40 },
+            { id: 4, name: 'Nasi Ayam Bakar', type: 'food', yield: 1, ingredients: [{materialId: 1, qty: 100}, {materialId: 2, qty: 120}, {materialId: 5, qty: 10}], overheads: [{name: 'Arang/Gas', cost: 300}, {name: 'Box', cost: 1500}], targetMargin: 40 },
+            { id: 5, name: 'Mac n Cheese', type: 'food', yield: 1, ingredients: [{materialId: 16, qty: 80}, {materialId: 17, qty: 20}, {materialId: 13, qty: 50}], overheads: [{name: 'Cup', cost: 1000}], targetMargin: 50 },
+            { id: 6, name: 'Kentang Goreng', type: 'snack', yield: 1, ingredients: [{materialId: 8, qty: 150}, {materialId: 4, qty: 20}], overheads: [{name: 'Paper Bag', cost: 500}], targetMargin: 50 },
+            { id: 7, name: 'Donat Gula', type: 'snack', yield: 6, ingredients: [{materialId: 3, qty: 250}, {materialId: 10, qty: 50}], overheads: [{name: 'Gas', cost: 500}], targetMargin: 60 },
+            { id: 8, name: 'Tahu Cabe Garam', type: 'snack', yield: 1, ingredients: [{materialId: 7, qty: 4}, {materialId: 6, qty: 10}, {materialId: 5, qty: 5}], overheads: [{name: 'Box', cost: 1000}], targetMargin: 50 },
+            { id: 9, name: 'Stick Singkong', type: 'snack', yield: 1, ingredients: [{materialId: 9, qty: 200}, {materialId: 4, qty: 20}], overheads: [{name: 'Paper Bag', cost: 500}], targetMargin: 50 },
+            { id: 10, name: 'Pentol Kriwil', type: 'snack', yield: 1, ingredients: [{materialId: 18, qty: 8}, {materialId: 4, qty: 10}], overheads: [{name: 'Cup', cost: 800}], targetMargin: 50 },
+            { id: 11, name: 'Es Kopi Item', type: 'drink', yield: 1, ingredients: [{materialId: 11, qty: 15}, {materialId: 10, qty: 20}], overheads: [{name: 'Cup+Sedotan', cost: 800}, {name: 'Es Batu', cost: 500}], targetMargin: 100 },
+            { id: 12, name: 'Es Teh Solo', type: 'drink', yield: 1, ingredients: [{materialId: 12, qty: 1}, {materialId: 10, qty: 30}], overheads: [{name: 'Cup+Sedotan', cost: 800}, {name: 'Es Batu', cost: 500}], targetMargin: 100 },
+            { id: 13, name: 'Es Mbok Yu', type: 'drink', yield: 1, ingredients: [{materialId: 12, qty: 1}, {materialId: 13, qty: 50}], overheads: [{name: 'Cup+Sedotan', cost: 800}, {name: 'Es Batu', cost: 500}], targetMargin: 100 },
+            { id: 14, name: 'Es Thai Tea', type: 'drink', yield: 1, ingredients: [{materialId: 12, qty: 2}, {materialId: 13, qty: 80}], overheads: [{name: 'Cup+Sedotan', cost: 1000}, {name: 'Es Batu', cost: 500}], targetMargin: 100 },
+            { id: 15, name: 'Es Matcha', type: 'drink', yield: 1, ingredients: [{materialId: 14, qty: 15}, {materialId: 13, qty: 100}], overheads: [{name: 'Cup+Sedotan', cost: 1000}, {name: 'Es Batu', cost: 500}], targetMargin: 100 },
+            { id: 16, name: 'Es Jeruk Nipis', type: 'drink', yield: 1, ingredients: [{materialId: 15, qty: 30}, {materialId: 10, qty: 30}], overheads: [{name: 'Cup+Sedotan', cost: 800}, {name: 'Es Batu', cost: 500}], targetMargin: 100 },
+            { id: 17, name: 'Es Jeruk Peras', type: 'drink', yield: 1, ingredients: [{materialId: 15, qty: 100}, {materialId: 10, qty: 20}], overheads: [{name: 'Cup+Sedotan', cost: 800}, {name: 'Es Batu', cost: 500}], targetMargin: 80 },
+        ];
+
+        // --- FUNGSI FORMATTING ---
+        const formatRupiah = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+        const toNumber = (val) => Number(val) || 0;
+
+        // --- APLIKASI UTAMA ---
+        function App() {
+            // State dengan LocalStorage Persistence
+            const [materials, setMaterials] = useState(() => {
+                const saved = localStorage.getItem('ds_materials');
+                return saved ? JSON.parse(saved) : INITIAL_MATERIALS;
+            });
+
+            const [recipes, setRecipes] = useState(() => {
+                const saved = localStorage.getItem('ds_recipes');
+                return saved ? JSON.parse(saved) : INITIAL_RECIPES;
+            });
+
+            const [activeTab, setActiveTab] = useState('recipes');
+
+            // Save to LocalStorage whenever data changes
+            useEffect(() => {
+                localStorage.setItem('ds_materials', JSON.stringify(materials));
+            }, [materials]);
+
+            useEffect(() => {
+                localStorage.setItem('ds_recipes', JSON.stringify(recipes));
+            }, [recipes]);
+
+            // Logic Hitungan
+            const getMaterialCostPerUnit = (mat) => {
+                if (!mat.conversion || mat.conversion === 0) return 0;
+                return mat.buyPrice / mat.conversion;
+            };
+
+            const calculateRecipeHPP = (recipe) => {
+                let materialCost = 0;
+                recipe.ingredients.forEach(ing => {
+                    const mat = materials.find(m => m.id === Number(ing.materialId));
+                    if (mat) {
+                        materialCost += (getMaterialCostPerUnit(mat) * ing.qty);
+                    }
+                });
+
+                const overheadCost = recipe.overheads.reduce((sum, item) => sum + toNumber(item.cost), 0);
+                const totalBatchCost = materialCost + overheadCost;
+                const hppPerUnit = recipe.yield > 0 ? totalBatchCost / recipe.yield : 0;
+                
+                return { materialCost, overheadCost, totalBatchCost, hppPerUnit };
+            };
+
+            // CRUD Ops
+            const addMaterial = (newMat) => setMaterials([...materials, { ...newMat, id: Date.now() }]);
+            const deleteMaterial = (id) => {
+                if(confirm('Yakin hapus bahan ini?')) setMaterials(materials.filter(m => m.id !== id));
+            };
+            
+            const addRecipe = (newRec) => setRecipes([...recipes, { ...newRec, id: Date.now() }]);
+            const updateRecipe = (updatedRec) => setRecipes(recipes.map(r => r.id === updatedRec.id ? updatedRec : r));
+            const deleteRecipe = (id) => {
+                if(confirm('Yakin hapus menu ini?')) setRecipes(recipes.filter(r => r.id !== id));
+            };
+
+            // --- SUB-KOMPONEN ---
+
+            const Dashboard = () => {
+                const lowStock = materials.filter(m => m.stock < (m.conversion * 0.2)); 
+                return (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-none shadow-lg">
+                                <div className="flex justify-between items-start">
+                                    <div><p className="text-blue-100 mb-1">Total Produk</p><h3 className="text-4xl font-bold">{recipes.length}</h3></div>
+                                    <Icons.Utensils className="text-blue-300" size={32} />
+                                </div>
+                            </Card>
+                            <Card className="bg-white border-green-200">
+                                <h3 className="text-gray-500 font-medium mb-1">Total Bahan Baku</h3>
+                                <p className="text-3xl font-bold text-gray-800">{materials.length} <span className="text-sm font-normal text-gray-400">Item</span></p>
+                            </Card>
+                            <Card className="bg-white border-orange-200">
+                                <div className="flex justify-between items-start">
+                                    <div><h3 className="text-orange-600 font-medium mb-1">Perlu Belanja</h3><p className="text-3xl font-bold text-gray-800">{lowStock.length} <span className="text-sm font-normal text-gray-400">Item</span></p></div>
+                                    <Icons.AlertCircle className="text-orange-500" size={24} />
+                                </div>
+                            </Card>
+                        </div>
+                        <Card className="overflow-hidden p-0">
+                            <div className="p-4 border-b border-gray-100 bg-gray-50"><h3 className="font-bold text-gray-700">Ringkasan Harga Jual</h3></div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left text-gray-600">
+                                    <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
+                                        <tr><th className="p-3">Kategori</th><th className="p-3">Produk</th><th className="p-3 text-right">Modal (HPP)</th><th className="p-3 text-center">Margin</th><th className="p-3 text-right">Harga Jual</th></tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {recipes.map(r => {
+                                            const { hppPerUnit } = calculateRecipeHPP(r);
+                                            const price = hppPerUnit + (hppPerUnit * (r.targetMargin / 100));
+                                            return (
+                                                <tr key={r.id} className="hover:bg-gray-50">
+                                                    <td className="p-3"><span className={`px-2 py-1 rounded text-xs font-bold ${r.type === 'drink' ? 'bg-purple-100 text-purple-600' : r.type === 'snack' ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600'}`}>{r.type === 'drink' ? 'Minuman' : r.type === 'snack' ? 'Cemilan' : 'Makanan'}</span></td>
+                                                    <td className="p-3 font-medium text-gray-800">{r.name}</td>
+                                                    <td className="p-3 text-right">{formatRupiah(hppPerUnit)}</td>
+                                                    <td className="p-3 text-center text-gray-400">{r.targetMargin}%</td>
+                                                    <td className="p-3 text-right font-bold text-blue-600">{formatRupiah(price)}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Card>
+                    </div>
+                );
+            };
+
+            const MaterialsTab = () => {
+                const [isFormOpen, setIsFormOpen] = useState(false);
+                const [formData, setFormData] = useState({ name: '', buyUnit: 'kg', buyPrice: 0, conversion: 1000, useUnit: 'gram', stock: 0 });
+
+                const handleSubmit = (e) => {
+                    e.preventDefault();
+                    addMaterial(formData);
+                    setIsFormOpen(false);
+                    setFormData({ name: '', buyUnit: 'kg', buyPrice: 0, conversion: 1000, useUnit: 'gram', stock: 0 });
+                };
+
+                return (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-gray-800">Database Bahan</h2>
+                            <Button onClick={() => setIsFormOpen(!isFormOpen)}><Icons.Plus size={18} /> Tambah Bahan</Button>
+                        </div>
+                        {isFormOpen && (
+                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                                <div className="bg-white rounded-xl w-full max-w-lg p-6 relative">
+                                    <button onClick={() => setIsFormOpen(false)} className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"><Icons.X size={20}/></button>
+                                    <h3 className="font-bold text-lg mb-4">Tambah Bahan Baku</h3>
+                                    <form onSubmit={handleSubmit} className="space-y-4">
+                                        <Input label="Nama Bahan" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <Input label="Satuan Beli" value={formData.buyUnit} onChange={e => setFormData({...formData, buyUnit: e.target.value})} required />
+                                            <Input label="Harga Beli" type="number" value={formData.buyPrice} onChange={e => setFormData({...formData, buyPrice: e.target.value})} required />
+                                        </div>
+                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 grid grid-cols-2 gap-4">
+                                            <Input label="Isi per Kemasan" type="number" value={formData.conversion} onChange={e => setFormData({...formData, conversion: e.target.value})} required className="mb-0" />
+                                            <Input label="Satuan Resep" value={formData.useUnit} onChange={e => setFormData({...formData, useUnit: e.target.value})} required className="mb-0" />
+                                        </div>
+                                        <Input label="Stok Awal" type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} />
+                                        <div className="flex justify-end gap-2"><Button variant="ghost" type="button" onClick={() => setIsFormOpen(false)}>Batal</Button><Button type="submit">Simpan</Button></div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+                        <Card className="p-0 overflow-hidden">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-50 text-gray-700 uppercase text-xs">
+                                    <tr><th className="p-4">Nama</th><th className="p-4">Harga Beli</th><th className="p-4">Konversi</th><th className="p-4 text-right">Modal/Unit</th><th className="p-4 text-right">Stok</th><th className="p-4 text-center">Aksi</th></tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {materials.map(m => (
+                                        <tr key={m.id} className="hover:bg-gray-50">
+                                            <td className="p-4 font-medium">{m.name}</td>
+                                            <td className="p-4">{formatRupiah(m.buyPrice)} <span className="text-gray-400 text-xs">/{m.buyUnit}</span></td>
+                                            <td className="p-4 text-xs text-gray-500">1 {m.buyUnit} = {m.conversion} {m.useUnit}</td>
+                                            <td className="p-4 text-right font-mono text-blue-600">{formatRupiah(getMaterialCostPerUnit(m))}/{m.useUnit}</td>
+                                            <td className={`p-4 text-right font-bold ${m.stock < (m.conversion * 0.2) ? 'text-red-600' : 'text-green-600'}`}>{m.stock} {m.useUnit}</td>
+                                            <td className="p-4 text-center"><button onClick={() => deleteMaterial(m.id)} className="text-red-400 hover:text-red-600"><Icons.Trash2 size={16}/></button></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </Card>
+                    </div>
+                );
+            };
+
+            const RecipesTab = () => {
+                const [selectedRecipe, setSelectedRecipe] = useState(null);
+
+                // Editor Component
+                const RecipeEditor = ({ recipe, onSave, onCancel, onDelete }) => {
+                    const [localRecipe, setLocalRecipe] = useState({...recipe});
+                    const calc = calculateRecipeHPP(localRecipe);
+                    
+                    const updateIng = (idx, f, v) => { const n = [...localRecipe.ingredients]; n[idx][f] = v; setLocalRecipe({...localRecipe, ingredients: n}); };
+                    const addIng = () => setLocalRecipe({...localRecipe, ingredients: [...localRecipe.ingredients, { materialId: materials[0]?.id, qty: 0 }]});
+                    const removeIng = (idx) => setLocalRecipe({...localRecipe, ingredients: localRecipe.ingredients.filter((_, i) => i !== idx)});
+                    
+                    const updateOv = (idx, f, v) => { const n = [...localRecipe.overheads]; n[idx][f] = v; setLocalRecipe({...localRecipe, overheads: n}); };
+                    const addOv = () => setLocalRecipe({...localRecipe, overheads: [...localRecipe.overheads, { name: '', cost: 0 }]});
+                    const removeOv = (idx) => setLocalRecipe({...localRecipe, overheads: localRecipe.overheads.filter((_, i) => i !== idx)});
+
+                    const recPrice = calc.hppPerUnit + (calc.hppPerUnit * (localRecipe.targetMargin / 100));
+
+                    return (
+                        <div className="bg-gray-50 min-h-full pb-10">
+                            <div className="flex items-center gap-4 mb-6">
+                                <Button variant="secondary" size="sm" onClick={onCancel}>&larr; Kembali</Button>
+                                <h2 className="text-xl font-bold text-gray-800">Edit Resep: {localRecipe.name}</h2>
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div className="lg:col-span-2 space-y-6">
+                                    <Card>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Input label="Nama Produk" value={localRecipe.name} onChange={e => setLocalRecipe({...localRecipe, name: e.target.value})} />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="mb-3"><label className="block text-xs font-bold text-gray-600 uppercase mb-1">Tipe</label><select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value={localRecipe.type} onChange={e => setLocalRecipe({...localRecipe, type: e.target.value})}><option value="food">Makanan</option><option value="drink">Minuman</option><option value="snack">Snack</option></select></div>
+                                                <Input label="Yield (Porsi)" type="number" value={localRecipe.yield} onChange={e => setLocalRecipe({...localRecipe, yield: Number(e.target.value)})} />
+                                            </div>
+                                        </div>
+                                    </Card>
+                                    <Card>
+                                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-gray-700 flex items-center gap-2"><Icons.Package size={18}/> Bahan Baku</h3><Button variant="secondary" size="sm" onClick={addIng}><Icons.Plus size={14}/> Tambah</Button></div>
+                                        <table className="w-full text-sm">
+                                            <tbody className="divide-y divide-gray-100">
+                                                {localRecipe.ingredients.map((ing, idx) => {
+                                                    const mat = materials.find(m => m.id === Number(ing.materialId));
+                                                    const cost = mat ? (mat.buyPrice / mat.conversion) * ing.qty : 0;
+                                                    return (
+                                                        <tr key={idx}>
+                                                            <td className="p-2"><select className="w-full p-2 border rounded" value={ing.materialId} onChange={e => updateIng(idx, 'materialId', Number(e.target.value))}>{materials.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></td>
+                                                            <td className="p-2 w-24"><input type="number" className="w-full p-2 border rounded text-right" value={ing.qty} onChange={e => updateIng(idx, 'qty', Number(e.target.value))} /></td>
+                                                            <td className="p-2 text-gray-500 w-16">{mat?.useUnit}</td>
+                                                            <td className="p-2 text-right">{formatRupiah(cost)}</td>
+                                                            <td className="p-2 w-8"><button onClick={() => removeIng(idx)} className="text-red-400"><Icons.X size={16}/></button></td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </Card>
+                                    <Card>
+                                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-gray-700 flex items-center gap-2"><Icons.Settings size={18}/> Biaya Ops / Kemasan</h3><Button variant="secondary" size="sm" onClick={addOv}><Icons.Plus size={14}/> Tambah</Button></div>
+                                        <div className="space-y-2">
+                                            {localRecipe.overheads.map((ov, idx) => (
+                                                <div key={idx} className="flex gap-2 items-center">
+                                                    <input className="flex-1 p-2 border rounded text-sm" placeholder="Nama Biaya" value={ov.name} onChange={e => updateOv(idx, 'name', e.target.value)} />
+                                                    <input className="w-32 p-2 border rounded text-sm text-right" type="number" placeholder="Rp" value={ov.cost} onChange={e => updateOv(idx, 'cost', Number(e.target.value))} />
+                                                    <button onClick={() => removeOv(idx)} className="text-red-400 p-2"><Icons.X size={16}/></button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
+                                </div>
+                                <div className="lg:col-span-1 space-y-6">
+                                    <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-600 sticky top-4">
+                                        <h3 className="font-bold text-gray-800 mb-4 text-lg">Analisa</h3>
+                                        <div className="space-y-3 mb-6 border-b pb-4">
+                                            <div className="flex justify-between text-sm"><span className="text-gray-500">Total Modal</span><span className="font-medium">{formatRupiah(calc.totalBatchCost)}</span></div>
+                                            <div className="flex justify-between items-center"><span className="font-bold text-blue-800">HPP / Porsi</span><span className="font-bold text-2xl text-blue-600">{formatRupiah(calc.hppPerUnit)}</span></div>
+                                        </div>
+                                        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Margin ({localRecipe.targetMargin}%)</label>
+                                            <input type="range" className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer mb-2" min="0" max="200" value={localRecipe.targetMargin} onChange={e => setLocalRecipe({...localRecipe, targetMargin: Number(e.target.value)})} />
+                                            <div className="flex justify-between items-center text-sm"><span>Harga Jual:</span><span className="font-bold text-green-600 text-lg">{formatRupiah(recPrice)}</span></div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Button className="w-full" onClick={() => onSave(localRecipe)}><Icons.Save size={18}/> Simpan</Button>
+                                            <Button variant="danger" className="w-full" onClick={() => onDelete(localRecipe.id)}><Icons.Trash2 size={18}/> Hapus</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                };
+
+                if (selectedRecipe) return <RecipeEditor recipe={selectedRecipe} onSave={(u) => { if(recipes.find(r=>r.id===u.id)) updateRecipe(u); else addRecipe(u); setSelectedRecipe(null); }} onCancel={()=>setSelectedRecipe(null)} onDelete={(id)=>{ deleteRecipe(id); setSelectedRecipe(null); }} />;
+
+                // List View
+                const foods = recipes.filter(r => r.type === 'food');
+                const snacks = recipes.filter(r => r.type === 'snack');
+                const drinks = recipes.filter(r => r.type === 'drink');
+                
+                const Section = ({ title, items, icon:Icon }) => (
+                    <div className="mb-8">
+                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-700"><Icon size={20}/> {title}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {items.map(r => {
+                                const c = calculateRecipeHPP(r);
+                                return (
+                                    <div key={r.id} onClick={() => setSelectedRecipe(r)} className="bg-white p-4 rounded-xl border border-gray-100 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group">
+                                        <div className="flex justify-between items-start mb-2"><h4 className="font-bold text-gray-800 group-hover:text-blue-600">{r.name}</h4><span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">Edit</span></div>
+                                        <div className="space-y-1 text-sm text-gray-500">
+                                            <div className="flex justify-between"><span>Modal:</span><span className="font-medium text-gray-700">{formatRupiah(c.hppPerUnit)}</span></div>
+                                            <div className="flex justify-between"><span>Jual:</span><span className="font-medium text-green-600">{formatRupiah(c.hppPerUnit + (c.hppPerUnit * (r.targetMargin/100)))}</span></div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                            <button onClick={() => setSelectedRecipe({ id: Date.now(), name: 'Menu Baru', type: 'food', yield: 1, ingredients: [], overheads: [], targetMargin: 40 })} className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500 transition-colors">
+                                <Icons.Plus size={24} className="mb-2"/><span className="font-medium">Tambah</span>
+                            </button>
+                        </div>
+                    </div>
+                );
+
+                return (
+                    <div>
+                        <div className="flex justify-between items-center mb-6"><h2 className="text-2xl font-bold text-gray-800">Daftar Menu</h2></div>
+                        <Section title="Makanan" items={foods} icon={Icons.Utensils} />
+                        <Section title="Snack" items={snacks} icon={Icons.Package} />
+                        <Section title="Minuman" items={drinks} icon={Icons.Coffee} />
+                    </div>
+                );
+            };
+
+            const CalculatorTab = () => {
+                const [selId, setSelId] = useState(recipes[0]?.id);
+                const [margin, setMargin] = useState(50);
+                const [target, setTarget] = useState(1000000);
+                
+                const rec = recipes.find(r => r.id === Number(selId));
+                const calc = rec ? calculateRecipeHPP(rec) : { hppPerUnit: 0 };
+                const sellPrice = calc.hppPerUnit + (calc.hppPerUnit * (margin / 100));
+                const profit = sellPrice - calc.hppPerUnit;
+                const targetQty = profit > 0 ? Math.ceil(target / profit) : 0;
+
+                return (
+                    <div className="space-y-6">
+                        <Card>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Pilih Produk Simulasi</label>
+                            <select className="w-full p-3 border rounded-lg text-lg bg-gray-50" value={selId} onChange={e => setSelId(e.target.value)}>
+                                {recipes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                            </select>
+                        </Card>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Card className="border-l-4 border-l-blue-500">
+                                <h3 className="text-blue-900 font-bold mb-6 flex items-center gap-2"><Icons.Calculator size={20}/> Simulasi Harga</h3>
+                                <div className="space-y-6">
+                                    <div>
+                                        <div className="flex justify-between mb-2"><label className="text-sm font-bold text-gray-700">Margin</label><span className="text-sm font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">{margin}%</span></div>
+                                        <input type="range" min="0" max="300" step="5" value={margin} onChange={(e) => setMargin(Number(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"/>
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
+                                        <div className="flex justify-between items-center"><span className="text-gray-600">Harga Jual</span><span className="text-2xl font-bold text-gray-800">{formatRupiah(sellPrice)}</span></div>
+                                        <div className="flex justify-between items-center pt-2 border-t border-gray-200 text-green-700"><span className="font-medium">Untung</span><span className="font-bold">+{formatRupiah(profit)} / porsi</span></div>
+                                    </div>
+                                </div>
+                            </Card>
+                            <Card className="border-l-4 border-l-purple-500">
+                                <h3 className="text-purple-900 font-bold mb-6 flex items-center gap-2"><Icons.BarChart3 size={20}/> Target Omset</h3>
+                                <div className="space-y-6">
+                                    <Input label="Saya ingin gaji/tabungan sebesar..." type="number" value={target} onChange={e => setTarget(Number(e.target.value))} className="text-lg font-bold" />
+                                    <div className="p-6 bg-purple-50 rounded-xl border border-purple-100 text-center flex flex-col items-center justify-center min-h-[140px]">
+                                        <p className="text-gray-600 text-sm mb-2">Target Jualan Kamu:</p>
+                                        <p className="text-5xl font-bold text-purple-700 mb-2">{targetQty}</p>
+                                        <p className="text-sm font-medium text-purple-900 bg-purple-200 px-3 py-1 rounded-full">Porsi {rec?.name}</p>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                );
+            };
+
+            const MenuBtn = ({ id, icon:Icon, label }) => (
+                <button onClick={() => setActiveTab(id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === id ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
+                    <Icon size={20} /><span>{label}</span>
+                </button>
+            );
+
+            return (
+                <div className="flex h-screen bg-gray-50 font-sans text-gray-800">
+                    <aside className="w-64 bg-white border-r border-gray-200 p-4 hidden md:flex flex-col z-10 shadow-sm">
+                        <div className="mb-8 px-4 flex items-center gap-3 text-blue-700">
+                            <div className="bg-blue-100 p-2 rounded-lg"><Icons.ChefHat size={28} /></div>
+                            <div><h1 className="font-bold text-lg leading-tight">Dapur Sedayu</h1><p className="text-[10px] text-gray-500 font-medium tracking-wide uppercase">System HPP</p></div>
+                        </div>
+                        <nav className="space-y-1 flex-1">
+                            <MenuBtn id="recipes" icon={Icons.Utensils} label="Menu & Resep" />
+                            <MenuBtn id="materials" icon={Icons.Package} label="Database Bahan" />
+                            <MenuBtn id="dashboard" icon={Icons.BarChart3} label="Ringkasan Toko" />
+                            <MenuBtn id="calculator" icon={Icons.Calculator} label="Simulasi Bisnis" />
+                        </nav>
+                        <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-800">
+                            "Rutin update harga bahan baku agar HPP tetap akurat."
+                        </div>
+                    </aside>
+
+                    <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t p-2 flex justify-around z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+                        <button onClick={() => setActiveTab('recipes')} className={`p-2 flex flex-col items-center ${activeTab === 'recipes' ? 'text-blue-600' : 'text-gray-400'}`}><Icons.Utensils size={20}/><span className="text-[10px] mt-1">Menu</span></button>
+                        <button onClick={() => setActiveTab('materials')} className={`p-2 flex flex-col items-center ${activeTab === 'materials' ? 'text-blue-600' : 'text-gray-400'}`}><Icons.Package size={20}/><span className="text-[10px] mt-1">Bahan</span></button>
+                        <button onClick={() => setActiveTab('calculator')} className={`p-2 flex flex-col items-center ${activeTab === 'calculator' ? 'text-blue-600' : 'text-gray-400'}`}><Icons.Calculator size={20}/><span className="text-[10px] mt-1">Simulasi</span></button>
+                        <button onClick={() => setActiveTab('dashboard')} className={`p-2 flex flex-col items-center ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-gray-400'}`}><Icons.BarChart3 size={20}/><span className="text-[10px] mt-1">Home</span></button>
+                    </div>
+
+                    <main className="flex-1 overflow-y-auto relative">
+                        <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 px-8 py-4 z-20 flex justify-between items-center">
+                            <h1 className="text-xl font-bold text-gray-800 capitalize">{activeTab === 'recipes' ? 'Manajemen Resep' : activeTab === 'materials' ? 'Stok Bahan' : activeTab === 'calculator' ? 'Kalkulator Cuan' : 'Dashboard'}</h1>
+                        </header>
+                        <div className="p-4 md:p-8 pb-24 md:pb-8 max-w-7xl mx-auto">
+                            {activeTab === 'dashboard' && <Dashboard />}
+                            {activeTab === 'materials' && <MaterialsTab />}
+                            {activeTab === 'recipes' && <RecipesTab />}
+                            {activeTab === 'calculator' && <CalculatorTab />}
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
